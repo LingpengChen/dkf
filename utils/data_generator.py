@@ -42,6 +42,7 @@ def generate_data(x0, R, Q):
 
         # 使用真实输入更新状态
         next_x = current_x + u_true
+        next_x[2] = next_x[2] % (2 * np.pi)
         true_states.append(next_x)
 
         # 计算所有Tag的全局坐标
@@ -285,7 +286,7 @@ if __name__ == "__main__":
             process_noise=process_noise,
             measurement_noise=measurement_noise,
             scale_factor=10.0,
-            output_dir=data_set,
+            output_dir=dataset_dir,
             filename_prefix=f"trajectory_{i+1}",
             P0=P0
         )

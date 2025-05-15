@@ -186,6 +186,9 @@ class UWBPoseEncoder(nn.Module):
         mu = self.mu_proj(pose_feature)       # [batch, 3] (x, y, theta)
         logL = self.logL_proj(pose_feature)  # [batch, 3]
         
+        # if torch.isnan(mu).any():
+        #     pass
+        
         return mu, logL
     
     # def sample(self, mu, logvar):

@@ -6,7 +6,7 @@ import os
 from tqdm import tqdm
 from utils.data_loader import create_data_loaders
 from utils.visualize_utils import plot_training_history, visualize_predictions
-from model.dkf import UWBVAEForPose
+from model.dkf_supervised import DKF_supervised
 from training_manager import TrainingManager
 
 class EarlyStopping:
@@ -177,14 +177,14 @@ def main():
     print(f"测试集样本数: {len(test_loader.dataset)}")
     
     # 初始化模型和训练管理器
-    dkf_model = UWBVAEForPose(hidden_dim=64, latent_dim=3)
+    dkf_model = DKF_supervised(hidden_dim=64, latent_dim=3)
     training_manager = TrainingManager(
         model_name='DKF_Model',
-        save_dir='/home/clp/catkin_ws/src/dkf/training_runs',
+        save_dir='/home/clp/workspace/dkf/training_runs',
         checkpoint_frequency=5,  # 每5个epoch保存一次
         keep_last_n=5,          # 保留最近3个checkpoint
         save_best=True,          # 保存最佳模型
-        pretrained_model_dir = "DKF_Model_20250513_180748"
+        pretrained_model_dir = "DKF_Model_20250515_1017"
     )
     
     # 训练模型
@@ -193,7 +193,7 @@ def main():
         train_loader=train_loader,
         val_loader=val_loader,
         test_loader=test_loader,
-        epochs=11,
+        epochs=50,
         lr=1e-3,
         device=device,
         training_manager=training_manager

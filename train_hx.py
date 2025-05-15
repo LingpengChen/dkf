@@ -47,13 +47,7 @@ def train_model(model, train_loader, val_loader, test_loader, epochs=50, lr=1e-3
     
     history = {
         'train_loss': [],
-        'train_recon_loss': [],
-        'train_kl_loss': [],
-        
         'val_loss': [],
-        'val_recon_loss': [],
-        'val_kl_loss': [],
-        
         'test_loss': [],
         'pose_error': [],
         'learning_rates': []
@@ -74,14 +68,11 @@ def train_model(model, train_loader, val_loader, test_loader, epochs=50, lr=1e-3
         # 训练阶段
         model.train()
         train_loss = 0
-        train_recon_loss = 0
-        train_kl_loss = 0
         
         with tqdm(train_loader, desc=f"Epoch {epoch+1}/{epochs}") as pbar:
             for batch in pbar:
                 x1_true = batch['true_states'].to(device)
-                # u1_true = batch['true_inputs'].to(device)
-                
+                u1_true = batch['true_inputs'].to(device)
                 x0_bar = batch['estimated_states_prev'].to(device)
                 x1_bar = batch['estimated_states_curr'].to(device)
                 P0_bar = batch['covariance_prev'].to(device)
@@ -93,119 +84,60 @@ def train_model(model, train_loader, val_loader, test_loader, epochs=50, lr=1e-3
                 M2 = batch['tag_anchor_distance_next'].to(device)
                 measurement_to_tag_mapping = batch['measurement_to_tag_mapping'].to(device)
                 
-                # KL权重预热
-                # beta = min(epoch / warmup_epochs, 1.0) * target_beta
-
-                # 梯度裁剪
-                # torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-                beta = 0.1
-                
                 optimizer.zero_grad()
-                # loss, recon_loss, kl_loss, _, _, _ = model(x0_bar, P0_bar, x1_bar, P1_bar, u1, Q1, M1, M2,  measurement_to_tag_mapping, true_pose=x1_true, beta=beta)
-                loss, recon_loss, kl_loss, _, _, _ = model(x0_bar, P0_bar, x1_bar, P1_bar, u1, Q1, M1, M2,  measurement_to_tag_mapping, true_pose=None, beta=beta)
+                # total_loss, recon_loss, _, pose_sample, _, _= model(M1, measurement_to_tag_mapping=measurement_to_tag_mapping, true_pose=x1_true)
+                loss, recon_loss, kl_loss, pose_sample, x1_hat, P1_hat = model(x0_bar, P0_bar, x1_bar, P1_bar, u1, Q1, M1, M2,  measurement_to_tag_mapping, true_pose=x1_true)
+
                 loss.backward()
                 optimizer.step()
                 
                 train_loss += loss.item()
-                # train_recon_loss += recon_loss.item()
-                # if kl_loss is not None:
-                #     train_kl_loss += kl_loss.item()
                 pbar.set_postfix({'loss': loss.item()})
         
         train_loss /= len(train_loader)
-        train_recon_loss /= len(train_loader)
-        train_kl_loss /= len(train_loader)
         
         # 验证阶段
         model.eval()
         val_loss = 0
-        val_recon_loss = 0
-        val_kl_loss = 0
-        
         test_loss = 0
-        test_recon_loss = 0
-        test_kl_loss = 0
         pose_errors = []
         
-        with torch.no_grad():
-            # 验证集评估
-            for batch in val_loader:
-                x1_true = batch['true_states'].to(device)
-                # u1_true = batch['true_inputs'].to(device)
-                
-                x0_bar = batch['estimated_states_prev'].to(device)
-                x1_bar = batch['estimated_states_curr'].to(device)
-                P0_bar = batch['covariance_prev'].to(device)
-                P1_bar = batch['covariance_curr'].to(device)
-                u1 = batch['measured_inputs'].to(device)
-                Q1 = batch['process_noise'].to(device)
-                
-                M1 = batch['tag_anchor_distance_curr'].to(device)
-                M2 = batch['tag_anchor_distance_next'].to(device)
-                measurement_to_tag_mapping = batch['measurement_to_tag_mapping'].to(device)
-
-                optimizer.zero_grad()
-                loss, recon_loss, kl_loss, pose_sample, x1_hat, P1_hat = model(x0_bar, P0_bar, x1_bar, P1_bar, u1, Q1, M1, M2,  measurement_to_tag_mapping, true_pose=x1_true)
-                val_loss += loss.item()
-                val_recon_loss += recon_loss.item()
-                if kl_loss is not None:
-                    val_kl_loss += kl_loss.item()
+        # with torch.no_grad():
+        #     # 验证集评估
+        #     for batch in val_loader:
+        #         x1_true = batch['true_states'].to(device)
+        #         M1 = batch['tag_anchor_distance_curr'].to(device)
+        #         measurement_to_tag_mapping = batch['measurement_to_tag_mapping'].to(device)
+        #         loss, pose_sample, xt_plus, logL = model(measurements=M1, 
+        #                                                  measurement_to_tag_mapping=measurement_to_tag_mapping, true_pose=x1_true)
+        #         val_loss += loss.item()
                 
             
-            # 测试集评估
-            for batch in test_loader:
-                x1_true = batch['true_states'].to(device)
-                # u1_true = batch['true_inputs'].to(device)
-                
-                x0_bar = batch['estimated_states_prev'].to(device)
-                x1_bar = batch['estimated_states_curr'].to(device)
-                P0_bar = batch['covariance_prev'].to(device)
-                P1_bar = batch['covariance_curr'].to(device)
-                u1 = batch['measured_inputs'].to(device)
-                Q1 = batch['process_noise'].to(device)
-                
-                M1 = batch['tag_anchor_distance_curr'].to(device)
-                M2 = batch['tag_anchor_distance_next'].to(device)
-                measurement_to_tag_mapping = batch['measurement_to_tag_mapping'].to(device)
-                
-                loss, recon_loss, kl_loss, pose_sample, x1_hat, P1_hat = model(x0_bar, P0_bar, x1_bar, P1_bar, u1, Q1, M1, M2,  measurement_to_tag_mapping, true_pose=x1_true)
-                test_loss += loss.item()
-                test_recon_loss += recon_loss.item()
-                if kl_loss is not None:
-                    test_kl_loss += kl_loss.item()
-
-                if True:
-                    pose_error = torch.sqrt(torch.sum((x1_true[:, :2] - pose_sample[:, :2])**2, dim=1))
-                    pose_errors.extend(pose_error.cpu().numpy())
-                else:
-                    pose_error = torch.sqrt(torch.sum((x1_true[:, :2] - x1_hat[:, :2])**2, dim=1))
-                    pose_errors.extend(pose_error.cpu().numpy())
+        #     # 测试集评估
+        #     for batch in test_loader:
+        #         x1_true = batch['true_states'].to(device)
+        #         M1 = batch['tag_anchor_distance_curr'].to(device)
+        #         measurement_to_tag_mapping = batch['measurement_to_tag_mapping'].to(device)
+        #         loss, pose_sample, xt_plus, logL = model(measurements=M1, 
+        #                                                  measurement_to_tag_mapping=measurement_to_tag_mapping, true_pose=x1_true)
+        #         test_loss += loss.item()
+            
+        #         pose_error = torch.sqrt(torch.sum((x1_true[:, :2] - xt_plus[:, :2])**2, dim=1))
+        #         pose_errors.extend(pose_error.cpu().numpy())
         
-        val_loss /= len(val_loader)
-        val_recon_loss /= len(val_loader)
-        val_kl_loss /= len(val_loader)
-        
-        test_loss /= len(test_loader)
-        test_recon_loss /= len(test_loader)
-        test_kl_loss /= len(test_loader)
-        
-        mean_pose_error = np.mean(pose_errors)
+        # val_loss /= len(val_loader)
+        # test_loss /= len(test_loader)
+        # mean_pose_error = np.mean(pose_errors)
         
         # 更新学习率
         scheduler.step(val_loss)
         
-        # 更新历史记录
-        history['train_loss'].append(float(train_loss))
-        history['train_recon_loss'].append(float(train_recon_loss))
-        history['train_kl_loss'].append(float(train_kl_loss))
-        
-        history['val_loss'].append(float(val_loss))
-        history['val_recon_loss'].append(float(val_recon_loss))
-        history['val_kl_loss'].append(float(val_kl_loss))
-        
-        history['test_loss'].append(float(test_loss))
-        history['pose_error'].append(float(mean_pose_error))
-        history['learning_rates'].append(float(optimizer.param_groups[0]['lr']))
+        # # 更新历史记录
+        # history['train_loss'].append(float(train_loss))
+        # history['val_loss'].append(float(val_loss))
+        # history['test_loss'].append(float(test_loss))
+        # history['pose_error'].append(float(mean_pose_error))
+        # history['learning_rates'].append(float(optimizer.param_groups[0]['lr']))
         
 
         # 保存检查点和历史记录
@@ -222,15 +154,14 @@ def train_model(model, train_loader, val_loader, test_loader, epochs=50, lr=1e-3
             break
         
         print(f"Epoch {epoch+1}/{epochs}")
-        print(f"Train Loss: {train_loss:.4f}, train_recon_loss: {train_recon_loss:.4f}, train_kl_loss: {train_kl_loss:.4f}")
-        print(f"Val Loss: {val_loss:.4f}, val_recon_loss: {val_recon_loss:.4f}, val_kl_loss: {val_kl_loss:.4f}")
+        print(f"Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}")
         print(f"Learning Rate: {optimizer.param_groups[0]['lr']:.6f}")
     
     return history
 
 def main():
-    torch.manual_seed(0)
-    np.random.seed(0)
+    torch.manual_seed(42)
+    np.random.seed(42)
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"使用设备: {device}")
@@ -254,7 +185,7 @@ def main():
         checkpoint_frequency=5,  # 每5个epoch保存一次
         keep_last_n=5,          # 保留最近3个checkpoint
         save_best=True,          # 保存最佳模型
-        pretrained_model_dir = "DKF_Model_supervised_pretrain"
+        pretrained_model_dir = "DKF_Model_20250515_1017"
     )
     
     # 训练模型
@@ -263,7 +194,7 @@ def main():
         train_loader=train_loader,
         val_loader=val_loader,
         test_loader=test_loader,
-        epochs=100,
+        epochs=50,
         lr=1e-3,
         device=device,
         training_manager=training_manager

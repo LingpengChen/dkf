@@ -5,11 +5,11 @@ import numpy as np
 from .encoder import UWBPoseEncoder
 
 
-class UWBVAEForPose(nn.Module):
+class DKF_supervised(nn.Module):
     """完整的VAE模型，包括编码器和损失计算"""
     
     def __init__(self, hidden_dim=64, latent_dim=3):
-        super(UWBVAEForPose, self).__init__()
+        super(DKF_supervised, self).__init__()
         
         tril_elements = latent_dim * (latent_dim + 1) // 2
         
@@ -83,7 +83,7 @@ def example_usage():
         
         num_measurements = measurements.size()[1]
         
-        dkf_model = UWBVAEForPose(hidden_dim=64, latent_dim=3)
+        dkf_model = DKF_supervised(hidden_dim=64, latent_dim=3)
         
         # 前向传播
         loss, pose_sample, xt_plus, logL = dkf_model(measurements, measurement_to_tag_mapping, true_pose)

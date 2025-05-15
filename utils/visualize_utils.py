@@ -80,12 +80,12 @@ def plot_training_history(history, output_path=None):
     # 损失曲线
     plt.subplot(1, 2, 1)
     plt.plot(history['train_loss'], label='Train Loss')
-    plt.plot(history['train_recon_loss'], label='train_recon_loss Loss')
-    plt.plot(history['train_kl_loss'], label='train_kl_loss Loss')
+    # plt.plot(history['train_recon_loss'], label='train_recon_loss Loss')
+    # plt.plot(history['train_kl_loss'], label='train_kl_loss Loss')
     
     plt.plot(history['val_loss'], label='Test Loss')
-    plt.plot(history['val_recon_loss'], label='val_recon_loss Loss')
-    plt.plot(history['val_kl_loss'], label='val_kl_loss Loss')
+    # plt.plot(history['val_recon_loss'], label='val_recon_loss Loss')
+    # plt.plot(history['val_kl_loss'], label='val_kl_loss Loss')
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.title('Training and Test Loss')
