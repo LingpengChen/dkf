@@ -66,7 +66,7 @@ def visualize_predictions(model, test_loader, num_samples=5, device='cuda', outp
                 # 绘制测量值（锚点位置）
                 anchor_positions = measurements[sample_idx, :, 2:4].cpu().numpy()
                 for j, pos in enumerate(anchor_positions):
-                    ax.plot(pos[0], pos[1], 'bo', label='Anchor' if j==0 else "")
+                    ax.plot(pos[0], pos[1], 'ko', label='Anchor' if j==0 else "")
                 
                 # 绘制真实位置
                 true_x, true_y = true_pose[sample_idx, 0].item(), true_pose[sample_idx, 1].item()
@@ -160,4 +160,4 @@ if __name__ == "__main__":
         history = saved_history
     
     # 可视化预测结果
-    visualize_predictions(dkf_model, test_loader, num_samples=5, device=device, output_path=training_manager.run_dir)
+    visualize_predictions(dkf_model, test_loader, num_samples=2, device=device, output_path=training_manager.run_dir)
