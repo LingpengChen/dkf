@@ -15,8 +15,10 @@ def visualize_predictions(model, test_loader, num_samples=5, device='cuda', outp
     
     plt.figure(figsize=(12, 4*num_samples))
     
-    dkf_pose_errors = []
-    ekf_pose_errors = []
+    dkf_xy_errors = []
+    dkf_theta_errors = []
+    ekf_xy_errors = []
+    ekf_theta_errors = []
     
     with torch.no_grad():
         # pose_errors = []
@@ -41,10 +43,15 @@ def visualize_predictions(model, test_loader, num_samples=5, device='cuda', outp
             
             loss, recon_loss, kl_loss, pose_sample, x1_hat, P1_hat, x1_plus = model(x0_bar, P0_bar, x1_bar, P1_bar, u1, Q1, M1, M2,  measurement_to_tag_mapping, true_pose=None)
 
-            dkf_pose_error = torch.sqrt(torch.sum((x1_true[:, :2] - x1_hat[:, :2])**2, dim=1))
-            dkf_pose_errors.extend(dkf_pose_error.cpu().numpy()) 
-            ekf_pose_error = torch.sqrt(torch.sum((x1_true[:, :2] - x1_bar[:, :2])**2, dim=1))
-            ekf_pose_errors.extend(ekf_pose_error.cpu().numpy()) 
+            dkf_xy_error = torch.sqrt(torch.sum((x1_true[:, :2] - x1_hat[:, :2])**2, dim=1))
+            dkf_xy_errors.extend(dkf_xy_error.cpu().numpy()) 
+            dkf_theta_error = torch.sqrt(torch.sum((x1_true[:, 2] - x1_hat[:, 2])**2))
+            dkf_theta_errors.append(dkf_theta_error.cpu().numpy()) 
+            
+            ekf_xy_error = torch.sqrt(torch.sum((x1_true[:, :2] - x1_bar[:, :2])**2, dim=1))
+            ekf_xy_errors.extend(ekf_xy_error.cpu().numpy()) 
+            ekf_theta_error = torch.sqrt(torch.sum((x1_true[:, 2] - x1_bar[:, 2])**2))
+            ekf_theta_errors.append(ekf_theta_error.cpu().numpy()) 
             
             # 绘制第一个样本结果
             measurements = M1
@@ -102,10 +109,12 @@ def visualize_predictions(model, test_loader, num_samples=5, device='cuda', outp
                 ax.set_title(f'Sample {i+1} - Angle (DKF Error: {np.degrees(dkf_angle_diff):.2f}°  EKF Error: {np.degrees(ekf_angle_diff):.2f}°)')
                 ax.legend(loc='upper right')
                 
-        mean_dkf_pose_errors = np.mean(dkf_pose_errors)
-        mean_ekf_pose_errors = np.mean(ekf_pose_errors)
-    print(f'mean_dkf_pose_errors: {mean_dkf_pose_errors}')
-    print(f'mean_ekf_pose_errors: {mean_ekf_pose_errors}')
+        mean_dkf_xy_errors = np.mean(dkf_xy_errors)
+        mean_dkf_theta_errors = np.mean(dkf_theta_errors)
+        mean_ekf_xy_errors = np.mean(ekf_xy_errors)
+        mean_ekf_theta_errors = np.mean(ekf_theta_errors)
+    print(f'mean_dkf_xy_errors: {mean_dkf_xy_errors}, mean_dkf_theta_errors: {mean_dkf_theta_errors}')
+    print(f'mean_ekf_xy_errors: {mean_ekf_xy_errors}, mean_ekf_theta_errors: {mean_ekf_theta_errors}')
     plt.tight_layout()
     img_dir = os.path.join(output_path, f"prediction_visualization_{NUM}.png")
     print(f"prediction_visualization saved at: {img_dir}")
