@@ -18,14 +18,28 @@ class UWBPoseEncoder(nn.Module):
         self.measurement_encoder = nn.Sequential(
             nn.Linear(5, hidden_dim),  # [x_i, y_i, m_j, n_j, d_ij]
             nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
+            nn.Linear(hidden_dim, 2*hidden_dim),
+            nn.ReLU(),
+            nn.Linear(2*hidden_dim, hidden_dim),
             nn.ReLU()
         )
         
         # 2. 自注意力机制组件
-        self.query_proj = nn.Linear(hidden_dim, hidden_dim)
-        self.key_proj = nn.Linear(hidden_dim, hidden_dim)
-        self.value_proj = nn.Linear(hidden_dim, hidden_dim)
+        self.query_proj = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim*2),
+            nn.ReLU(),
+            nn.Linear(hidden_dim*2, hidden_dim)
+        )
+        self.key_proj = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim*2),
+            nn.ReLU(), 
+            nn.Linear(hidden_dim*2, hidden_dim)
+        )
+        self.value_proj = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim*2),
+            nn.ReLU(),
+            nn.Linear(hidden_dim*2, hidden_dim)
+        )
         
         # 3. 注意力网络1 (按tag聚合measurements)
         self.attention_net1 = nn.Sequential(
@@ -42,8 +56,18 @@ class UWBPoseEncoder(nn.Module):
         )
         
         # 5. VAE映射层
-        self.mu_proj = nn.Linear(hidden_dim, latent_dim)  # 均值映射
-        self.logL_proj = nn.Linear(hidden_dim, tril_elements)  # 对数方差映射
+        # 5. 增强的VAE映射层
+        self.mu_proj = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, latent_dim)
+        )
+
+        self.logL_proj = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, tril_elements)
+        )
 
     def self_attention(self, features):
         """

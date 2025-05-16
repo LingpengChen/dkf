@@ -66,5 +66,5 @@ class UWBDecoder:
         """
         actual_distances = M2[:, :, 4]  # Get actual measurements
         # loss = torch.mean((reconstructed_distances - actual_distances) ** 2)
-        loss = torch.mean(torch.abs((reconstructed_distances - actual_distances) ** 2))
+        loss = torch.mean(torch.abs((reconstructed_distances - actual_distances)))
         return loss

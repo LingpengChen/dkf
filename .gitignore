@@ -1,3 +1,6 @@
-/uwb_data_pretrain
+/uwb_data_high_u_noise
+/uwb_data_low_u_noise
+/uwb_data_med_u_noise
+/uwb_data_super_high_u_noise
 /uwb_data
 /training_runs

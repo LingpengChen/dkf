@@ -168,7 +168,7 @@ def create_data_loaders(data_dir, batch_size=32, train_ratio=0.7, val_ratio=0.15
     test_loader = DataLoader(
         test_dataset, 
         batch_size=batch_size, 
-        shuffle=True, 
+        shuffle=False, 
         num_workers=num_workers
     )
 

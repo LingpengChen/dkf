@@ -7,7 +7,7 @@ num_tags = 4                       # Tag数量
 num_anchors = 9                   # Anchor数量
 # x0 = np.array([5.0, 2.0, 1.0])     # 初始状态 [t_x, t_y, theta]
 # P0 = np.eye(3) * 0                 # 初始协方差
-N = 102                          # 时间步数
+N = 1002                          # 时间步数
 
 
 # 定义Tag在平台坐标系中的位置（相对平台中心）

@@ -254,7 +254,10 @@ def get_experiment_data(seed=None, initial_position=None, process_noise=None, me
 if __name__ == "__main__":
     # 创建输出目录 os.getcwd()
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    dataset_dir = os.path.abspath( os.path.join(script_dir, "../uwb_data") )
+    # dataset_dir = os.path.abspath( os.path.join(script_dir, "../uwb_data_low_u_noise") )
+    # dataset_dir = os.path.abspath( os.path.join(script_dir, "../uwb_data_med_u_noise") )
+    # dataset_dir = os.path.abspath( os.path.join(script_dir, "../uwb_data_high_u_noise") )
+    dataset_dir = os.path.abspath( os.path.join(script_dir, "../uwb_data_super_high_u_noise") )
     os.makedirs(dataset_dir, exist_ok=True)
 
     print(f"Start to generate dataset at {dataset_dir}")
@@ -273,8 +276,8 @@ if __name__ == "__main__":
 
         # 随机噪声参数
         P0 = np.eye(3) * 0                 # 初始协方差
-        process_noise = np.random.uniform(0.05, 0.2)
-        measurement_noise = np.random.uniform(0.05, 0.2)
+        process_noise = 20*np.random.uniform(0.1, 0.2)
+        measurement_noise = np.random.uniform(0.1, 0.2)
 
         print(f"初始位置: ({init_x:.2f}, {init_y:.2f}, {init_theta:.2f})")
         print(f"过程噪声: {process_noise:.3f}, 测量噪声: {measurement_noise:.3f}")

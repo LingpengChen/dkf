@@ -47,9 +47,9 @@ class TrainingManager:
         # 加载或初始化元数据
         self._load_or_init_metadata()
 
-    def save_best_model(self, model):
-        """保存最佳模型"""
-        torch.save(model.state_dict(), self.best_model_path)
+    # def save_best_model(self, model):
+    #     """保存最佳模型"""
+    #     torch.save(model.state_dict(), self.best_model_path)
 
     def _create_run_dir(self):
         """创建带时间戳的运行目录"""

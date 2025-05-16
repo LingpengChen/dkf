@@ -1,7 +1,12 @@
+# from utils.visualize_utils import visualize_predictions
+from utils.data_loader import create_data_loaders
+from training_manager import TrainingManager
 import torch
-import numpy as np
-import matplotlib.pyplot as plt
 import os
+import numpy as np
+from model.dkf import DKF
+import matplotlib.pyplot as plt
+
 
 def visualize_predictions(model, test_loader, num_samples=5, device='cuda', output_path=None):
     """可视化部分预测结果"""
@@ -63,7 +68,7 @@ def visualize_predictions(model, test_loader, num_samples=5, device='cuda', outp
             ax = plt.subplot(num_samples, 2, 2*i+1)
             
             # 绘制测量值（锚点位置）
-            anchor_positions = measurements[sample_idx, :, 2:4].cpu().numpy()
+            anchor_positions = measurements[sample_idx, :, :2].cpu().numpy()
             for j, pos in enumerate(anchor_positions):
                 ax.plot(pos[0], pos[1], 'bo', label='Anchor' if j==0 else "")
             
@@ -109,33 +114,40 @@ def visualize_predictions(model, test_loader, num_samples=5, device='cuda', outp
     plt.savefig(img_dir)
     plt.show()
 
-def plot_training_history(history, output_path=None):
-    """绘制训练历史图表"""
-    plt.figure(figsize=(12, 4))
+
+if __name__ == "__main__":
+    num = 0
+    torch.manual_seed(num)
+    np.random.seed(num)
     
-    # 损失曲线
-    plt.subplot(1, 2, 1)
-    plt.plot(history['train_loss'], label='Train Loss')
-    # plt.plot(history['train_recon_loss'], label='train_recon_loss Loss')
-    # plt.plot(history['train_kl_loss'], label='train_kl_loss Loss')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"使用设备: {device}")
     
-    plt.plot(history['val_loss'], label='Test Loss')
-    # plt.plot(history['val_recon_loss'], label='val_recon_loss Loss')
-    # plt.plot(history['val_kl_loss'], label='val_kl_loss Loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.title('Training and Test Loss')
-    plt.legend()
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    dataset_dir = os.path.abspath( os.path.join(script_dir, "./uwb_data") )
+
+    # 创建数据加载器
+    _, _, test_loader = create_data_loaders(dataset_dir, batch_size=16)
+
     
-    # 位姿误差曲线
-    plt.subplot(1, 2, 2)
-    plt.plot(history['pose_error'], label='Pose Error')
-    plt.xlabel('Epoch')
-    plt.ylabel('Error (m)')
-    plt.title('Average Pose Error')
-    plt.legend()
+    # print(f"验证集样本数: {len(val_loader.dataset)}")
+    print(f"测试集样本数: {len(test_loader.dataset)}")
     
-    plt.tight_layout()
-    img_dir = os.path.join(output_path, "training_history.png")
-    plt.savefig(img_dir)
-    plt.show()
+    # 初始化模型和训练管理器
+    dkf_model = DKF(hidden_dim=64, latent_dim=3)
+    
+    training_manager = TrainingManager(
+        model_name='DKF_Model',
+        save_dir='/home/clp/workspace/dkf/training_runs',
+        checkpoint_frequency=5,  # 每5个epoch保存一次
+        keep_last_n=5,          # 保留最近3个checkpoint
+        save_best=True,          # 保存最佳模型
+        pretrained_model_dir = "DKF_Model_20250515_235913"
+    )
+
+    # 可视化预测结果
+    # visualize test result
+    visualize_predictions(dkf_model, test_loader, num_samples=5, device=device, output_path=training_manager.run_dir)
+
+    # 评估模型
+    # evaluate_model(dkf_model, test_loader, device)
