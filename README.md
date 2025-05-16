@@ -2,10 +2,10 @@
 
 ## Author Contributions
 
-| Name | Main Contributions |
-|------|--------------------|
-| **Lingpeng Chen** | • Architected the neural-network components<br>• Implemented the full training & inference pipeline |
-| **Hongxu Zhao**   | • Led the mathematical derivations and theoretical analysis |
+| Name | Main Contributions | Credit |
+|------|--------------------|--------|
+| **Lingpeng Chen** | • Architected the neural-network components<br>• Implemented the full training & inference pipeline | 50% |
+| **Hongxu Zhao**   | • Led the mathematical derivations and theoretical analysis | 50% |
 
 Both authors jointly conceived **Kalman-Guided Deep Kalman Filters (KG-DKF)** and continue to co-develop the project.
 
